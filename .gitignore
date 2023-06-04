@@ -1,5 +1,6 @@
-.clang-format
+.gitignore
 makefile
-build
 .vscode
+build
+.clang-format
 .cache
