@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "login.h"
 #include "message.h"
-#include "net/NetUtility.h"
+#include "net/netutility.h"
 #include "net/regulation.h"
 #include "net/request.h"
 #include <QComboBox>
@@ -25,6 +25,7 @@
 #include <qboxlayout.h>
 #include <qcombobox.h>
 #include <qdebug.h>
+#include <qglobal.h>
 #include <qjsonobject.h>
 #include <qlabel.h>
 #include <qlayoutitem.h>
@@ -38,6 +39,7 @@
 #include <qtextedit.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
+#include <string>
 
 MainWindow::MainWindow(QWidget* parent)
   : QMainWindow(parent)
@@ -192,7 +194,10 @@ QWidget* MainWindow::buildMessageListWidget(QWidget* parent)
             ->request(4, data)
             .then(
                 [=](const Response& response) {
-                    emit sendMessageOver(button->text(), text);
+                    qint64 time = std::stoll(response.data());
+                    QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(time);
+                    QString chatWindow = button->text();
+                    emit sendMessageOver(chatWindow, NetUtility::instance()->username().c_str(), text, dateTime.toString("yyyy-MM-dd hh:mm:ss"));
                 })
             .err(
                 [=](const Response& response) {
@@ -215,7 +220,7 @@ void MainWindow::onUserListChanged(int index)
     json.insert("username", request_username.c_str());
     std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
     NetUtility::instance()
-        ->request(2, data)
+        ->request(Regulation::kInfo, data)
         .then(
             [=](const Response& response) {
                 listWidget_->clear();
@@ -267,10 +272,10 @@ QWidget* MainWindow::getChatMessageLayout(QString username)
     return widget;
 }
 
-void MainWindow::onGetMessage(QString username, QString message)
+void MainWindow::onGetMessage(QString chatWindow, QString speaker, QString message, QString time)
 {
-    QWidget* widget = getChatMessageLayout(username);
+    QWidget* widget = getChatMessageLayout(chatWindow);
     int index = widget->layout()->count() - 1;
     QVBoxLayout* layout = static_cast<QVBoxLayout*>(widget->layout());
-    layout->insertWidget(index, new Message(username, "2020-10-10", message));
+    layout->insertWidget(index, new Message(speaker, time, message));
 }

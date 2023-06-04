@@ -5,6 +5,9 @@
 #include <qglobal.h>
 #include <qlabel.h>
 #include <qwidget.h>
+
+#include "net/netutility.h"
+
 class Message : public QWidget
 {
     Q_OBJECT
@@ -20,7 +23,10 @@ class Message : public QWidget
         QLabel* timeLabel = new QLabel("[" + time + "]");
         QLabel* contentLabel = new QLabel(content);
 
-        fromLabel->setStyleSheet("color: green; font-size: 14px;");
+        if (from.toStdString() == NetUtility::instance()->username())
+            fromLabel->setStyleSheet("color: green; font-size: 14px;");
+        else
+            fromLabel->setStyleSheet("color: blue; font-size: 14px;");
 
         QHBoxLayout* titleLayout = new QHBoxLayout(this);
         titleLayout->addWidget(fromLabel);
@@ -32,7 +38,6 @@ class Message : public QWidget
 
         layout->addWidget(contentLabel);
         contentLabel->setWordWrap(true);
-        //   contentLabel->setStyleSheet("background-color: skyblue");
 
         this->setLayout(layout);
     }

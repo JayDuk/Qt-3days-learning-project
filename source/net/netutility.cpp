@@ -5,6 +5,7 @@
 #include <QThread>
 #include <memory>
 #include <qabstractsocket.h>
+#include <qglobal.h>
 #include <qhostaddress.h>
 #include <qjsonobject.h>
 #include <stdint.h>
@@ -32,11 +33,18 @@ NetUtility::NetUtility()
 
     connect(&socket_, &QTcpSocket::readyRead, this, &NetUtility::handleRead);
 
-    board_handles_.insert({Regulation::kChat,
-                           [=](const Response& response) {
-                               QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
-                                 emit onGetMessage(json.value("username").toString(), json.value("message").toString());
-                           }});
+    broad_handles_
+        .insert({Regulation::kChat,
+                 [=](const Response& response) {
+                     qDebug() << response.data().c_str();
+                     QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
+
+                     QString chatWindow = json.value("from").toString();
+                     qDebug() << json.value("time").toString();
+                     qint64 time = json["time"].toDouble();
+                     QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(time);
+                     emit onGetMessage(chatWindow, chatWindow, json.value("message").toString(), dateTime.toString("yyyy-MM-dd hh:mm:ss"));
+                 }});
 }
 
 RequestHandler& NetUtility::request(uint32_t oper, std::string data)
@@ -58,10 +66,10 @@ void NetUtility::close()
 
 std::function<void(const Response&)> NetUtility::dispatch(const Response& response)
 {
-    if (response.isBoardcast())
+    if (response.isBroadcast())
     {
-        auto p_func = board_handles_.find(response.code());
-        if (p_func == board_handles_.end())
+        auto p_func = broad_handles_.find(response.code());
+        if (p_func == broad_handles_.end())
         {
             qDebug() << "no handle to accept response with operator " << response.code();
             return nullptr;

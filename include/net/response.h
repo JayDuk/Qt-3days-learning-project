@@ -23,7 +23,7 @@ class Response
   public:
     uint32_t seq() const;
 
-    bool isBoardcast() const;
+    bool isBroadcast() const;
 
     uint32_t code() const;
     std::string data() const

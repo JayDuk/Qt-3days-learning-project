@@ -28,12 +28,12 @@ class NetUtility : public QObject
     QTcpSocket socket_;
 
     std::map<uint32_t, std::shared_ptr<RequestHandler>> reply_handles_;
-    std::map<uint32_t, std::function<void(const Response&)>> board_handles_;
+    std::map<uint32_t, std::function<void(const Response&)>> broad_handles_;
 
     std::string username_;
 
   signals:
-    void onGetMessage(QString username, QString message);
+    void onGetMessage(QString chatWindow, QString speaker, QString message, QString time);
 
   public:
     std::string username() const

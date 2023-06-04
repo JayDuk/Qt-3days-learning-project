@@ -34,13 +34,13 @@ class MainWindow : public QMainWindow
     QWidget* buildToolWidget(QWidget* parent = nullptr);
 
   signals:
-    void sendMessageOver(QString username, QString message);
+    void sendMessageOver(QString chatWindow, QString speaker, QString message, QString time);
 
   private slots:
     void onUserListChanged(int index);
     void onSelectUserToChat(QListWidgetItem* item);
 
-    void onGetMessage(QString username, QString message);
+    void onGetMessage(QString chatWindow, QString speaker, QString message, QString time);
 
   private:
     QWidget* getChatMessageLayout(QString username);
