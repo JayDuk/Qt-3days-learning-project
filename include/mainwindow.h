@@ -37,7 +37,7 @@ class MainWindow : public QMainWindow
     void sendMessageOver(QString chatWindow, QString speaker, QString message, QString time);
 
   private slots:
-    void onUserListChanged(int index);
+ 
     void onSelectUserToChat(QListWidgetItem* item);
 
     void onGetMessage(QString chatWindow, QString speaker, QString message, QString time);

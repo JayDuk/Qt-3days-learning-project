@@ -1,10 +1,11 @@
 #include "mainwindow.h"
 #include "login.h"
 #include "message.h"
-#include "net/NetUtility.h"
+#include "messagelist.hpp"
 #include "net/netutility.h"
 #include "net/regulation.h"
 #include "net/request.h"
+#include "userlist.hpp"
 #include <QComboBox>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -45,9 +46,10 @@
 MainWindow::MainWindow(QWidget* parent)
   : QMainWindow(parent)
 {
-    initSocket();
-    initWidgets();
-    connect(NetUtility::instance(), &NetUtility::onGetMessage, this, &MainWindow::onGetMessage);
+    // listWidget_ = new QListWidget();
+    // initSocket();
+    // initWidgets();
+    // connect(NetUtility::instance(), &NetUtility::onGetMessage, this, &MainWindow::onGetMessage);
 
     LoginDialog* login = new LoginDialog(this);
     connect(login, &LoginDialog::loginSuccess, this, [=](QString username) {
@@ -55,6 +57,23 @@ MainWindow::MainWindow(QWidget* parent)
     });
     login->setModal(true);
     login->exec();
+
+    this->setWindowTitle("chat");
+    this->resize(800, 600);
+
+    QSplitter* splitter = new QSplitter(this);
+    splitter->setOrientation(Qt::Horizontal);
+    this->setCentralWidget(splitter);
+
+    UserList* userList = new UserList(this);
+    MessageList* messageList = new MessageList(this);
+
+    connect(userList, &UserList::onSelectUserToChat, messageList, &MessageList::onSwitchToChattingWindow);
+
+    splitter->addWidget(userList);
+    splitter->addWidget(messageList);
+    splitter->setStretchFactor(0, 5);
+    splitter->setStretchFactor(1, 10);
 }
 
 MainWindow::~MainWindow()
@@ -99,30 +118,9 @@ void MainWindow::initWidgets()
 }
 QWidget* MainWindow::buildFriendListWidget(QWidget* parent)
 {
-    QWidget* userListWidget = new QWidget(parent);
-    QVBoxLayout* userListLayout = new QVBoxLayout(userListWidget);
-
-    QComboBox* comboBox = new QComboBox(userListWidget);
-    comboBox->addItem("用户列表");
-    comboBox->addItem("好友列表");
-    comboBox->addItem("群聊列表");
-    userListLayout->addWidget(comboBox);
-
-    listWidget_ = new QListWidget(userListWidget);
-
-    listWidget_->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-    listWidget_->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-    listWidget_->setUniformItemSizes(true);
-
-    connect(comboBox, &QComboBox::activated, this, &MainWindow::onUserListChanged);
-    onUserListChanged(0);
-    userListLayout->addWidget(listWidget_);
-
-    userListLayout->setStretch(0, 3);
-    userListLayout->setStretch(1, 7);
-
-    return userListWidget;
+    return new UserList(parent);
 }
+
 QWidget* MainWindow::buildMessageListWidget(QWidget* parent)
 {
     QSplitter* splitter = new QSplitter(parent);
@@ -239,40 +237,6 @@ QWidget* MainWindow::buildToolWidget(QWidget* parent)
     return widget;
 }
 
-void MainWindow::onUserListChanged(int index)
-{
-    QJsonObject json;
-    json.insert("type", index);
-    std::string request_username = NetUtility::instance()->username();
-    json.insert("username", request_username.c_str());
-    std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
-    NetUtility::instance()
-        ->request(Regulation::kInfo, data)
-        .then(
-            [=](const Response& response) {
-                listWidget_->clear();
-                QJsonDocument jsonDocument = QJsonDocument::fromJson(response.data().c_str());
-                QJsonArray jsonArray = jsonDocument.array();
-
-                for (int i = 0; i < jsonArray.size(); ++i)
-                {
-                    auto username = jsonArray.at(i).toString();
-                    if (username.toStdString() == request_username)
-                        continue;
-
-                    QListWidgetItem* item = new QListWidgetItem(listWidget_);
-                    item->setSizeHint(QSize(0, 50));
-                    item->setTextAlignment(Qt::AlignCenter);
-                    item->setText(username);
-
-                    listWidget_->addItem(item);
-                }
-            })
-        .err(
-            [=](const Response& response) {
-                QMessageBox::warning(this, "error", QString::fromStdString(response.data()));
-            });
-}
 void MainWindow::onSelectUserToChat(QListWidgetItem* item)
 {
     QString text = item->text();
