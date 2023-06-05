@@ -36,14 +36,15 @@ NetUtility::NetUtility()
     broad_handles_
         .insert({Regulation::kChat,
                  [=](const Response& response) {
-                     qDebug() << response.data().c_str();
                      QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
 
-                     QString chatWindow = json.value("from").toString();
-                     qDebug() << json.value("time").toString();
+                     QString chatWindow = json["chatwindow"].toString();
+                     QString speaker = json["speaker"].toString();
+                     QString message = json["message"].toString();
                      qint64 time = json["time"].toDouble();
+
                      QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(time);
-                     emit onGetMessage(chatWindow, chatWindow, json.value("message").toString(), dateTime.toString("yyyy-MM-dd hh:mm:ss"));
+                     emit onGetMessage(chatWindow, speaker, message, dateTime.toString("yyyy-MM-dd hh:mm:ss"));
                  }});
 }
 

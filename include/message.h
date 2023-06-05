@@ -15,9 +15,11 @@ class Message : public QWidget
     Message(const QString& from, const QString& time, const QString& content)
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
+        this->setLayout(layout);
 
-        layout->setSpacing(3);
+        layout->setSpacing(0);
         layout->setAlignment(Qt::AlignLeft);
+        layout->setContentsMargins(0, 0, 0, 0);
 
         QLabel* fromLabel = new QLabel(from);
         QLabel* timeLabel = new QLabel("[" + time + "]");
@@ -28,18 +30,21 @@ class Message : public QWidget
         else
             fromLabel->setStyleSheet("color: blue; font-size: 14px;");
 
-        QHBoxLayout* titleLayout = new QHBoxLayout(this);
+        QWidget* titleWidget = new QWidget(this);
+        QHBoxLayout* titleLayout = new QHBoxLayout(titleWidget);
+        titleWidget->setLayout(titleLayout);
+
         titleLayout->addWidget(fromLabel);
         titleLayout->addWidget(timeLabel);
         titleLayout->setSpacing(10);
+        titleLayout->setContentsMargins(0, 0, 0, 0);
         titleLayout->setAlignment(Qt::AlignLeft);
 
-        layout->addLayout(titleLayout);
+        layout->addWidget(titleWidget);
 
         layout->addWidget(contentLabel);
         contentLabel->setWordWrap(true);
-
-        this->setLayout(layout);
+        contentLabel->setMaximumWidth(this->width() - 20);
     }
     ~Message() {}
 };

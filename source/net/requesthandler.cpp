@@ -17,7 +17,7 @@ void RequestHandler::err(std::function<void(const Response&)> err_func)
     this->err_func_ = err_func;
 }
 
-std::function<void(const Response&)> RequestHandler::get(uint32_t statu_code)
+std::function<void(const Response&)> RequestHandler::get(uint32_t status_code)
 {
-    return statu_code == 200 ? hand_func_ : err_func_;
+    return status_code == 200 ? hand_func_ : err_func_;
 }

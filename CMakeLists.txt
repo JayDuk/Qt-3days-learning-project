@@ -18,6 +18,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets   )
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
+include/userlist.hpp
  d:/QtProject/chat/include/login.h
 d:/QtProject/chat/include/mainwindow.h
 d:/QtProject/chat/include/net
@@ -36,6 +37,7 @@ d:/QtProject/chat/source/net/netutility.cpp
 d:/QtProject/chat/source/net/requesthandler.cpp
 d:/QtProject/chat/source/net/response.cpp
 include/message.h
+include/messagelist.hpp
 )
 
 include_directories(
