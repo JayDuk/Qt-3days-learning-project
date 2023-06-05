@@ -1,7 +1,6 @@
 #include "mainwindow.h"
 #include "login.h"
 #include "message.h"
-#include "net/NetUtility.h"
 #include "net/netutility.h"
 #include "net/regulation.h"
 #include "net/request.h"
@@ -41,6 +40,7 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <string>
+
 
 MainWindow::MainWindow(QWidget* parent)
   : QMainWindow(parent)
