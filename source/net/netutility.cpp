@@ -38,7 +38,7 @@ NetUtility::NetUtility()
                  [=](const Response& response) {
                      QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
 
-                     QString chatWindow = json["to"].toString();
+                     QString chatWindow = json["chatwindow"].toString();
                      QString speaker = json["speaker"].toString();
                      QString message = json["message"].toString();
                      qint64 time = json["time"].toDouble();

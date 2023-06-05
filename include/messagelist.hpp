@@ -2,12 +2,13 @@
 #define __MESSAGE_LIST_H__
 
 #include "message.h"
-#include "net/NetUtility.h"
 #include "net/netutility.h"
 
 #include <qboxlayout.h>
+#include <qdebug.h>
 #include <qjsondocument.h>
 #include <qjsonobject.h>
+#include <qlabel.h>
 #include <qmap.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>
@@ -32,16 +33,17 @@ class MessageList : public QWidget
       : QWidget(parent)
     {
         QVBoxLayout* layout = new QVBoxLayout(this);
+        this->setLayout(layout);
 
         chattingUsername_ = new QPushButton("聊天窗口", this);
         chattingUsername_->setStyleSheet("color: blue; font-size: 14px;");
         layout->addWidget(chattingUsername_);
 
-        messageLayout_ = new QStackedLayout(this);
-        // messageLayout_->addWidget(new QWidget(this));
-        buildChatMessageOfUser("TEST");
+        QWidget* mainWidget = new QWidget(this);
+        messageLayout_ = new QStackedLayout(mainWidget);
+        messageLayout_->addWidget(new QWidget(this));
 
-        layout->addLayout(messageLayout_);
+        layout->addWidget(mainWidget);
 
         layout->setStretch(0, 1);
 
@@ -57,7 +59,7 @@ class MessageList : public QWidget
     {
         QJsonObject object;
         object["username"] = NetUtility::instance()->username().c_str();
-        object["to"] = chattingUsername_->text();
+        object["chatwindow"] = chattingUsername_->text();
         object["message"] = message;
         object["single"] = isSingleChat_;
 
@@ -90,7 +92,8 @@ class MessageList : public QWidget
             buildChatMessageOfUser(chatWindow);
 
         QVBoxLayout* layout = userMessageLayouts_[chatWindow];
-        layout->addWidget(new Message(speaker, time, message));
+        int insertIndex = layout->count() - 1;
+        layout->insertWidget(insertIndex, new Message(speaker, time, message));
     }
 
   private:
@@ -99,20 +102,26 @@ class MessageList : public QWidget
         QSplitter* splitter = new QSplitter(Qt::Vertical, this);
 
         QScrollArea* scrollArea = new QScrollArea(this);
+        scrollArea->setWidgetResizable(true);
+        scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
         QWidget* widget = new QWidget(this);
         scrollArea->setWidget(widget);
 
         QVBoxLayout* layout = new QVBoxLayout(widget);
+        widget->setLayout(layout);
+
+        layout->addStretch();
 
         layout->setSpacing(3);
         layout->setAlignment(Qt::AlignLeft);
-
-        // layout->addStretch();
 
         splitter->addWidget(scrollArea);
 
         QWidget* inputWidget = new QWidget(this);
         QHBoxLayout* inputLayout = new QHBoxLayout(inputWidget);
+        inputWidget->setLayout(inputLayout);
         inputLayout->setSpacing(0);
 
         QTextEdit* input = new QTextEdit(inputWidget);
