@@ -9,6 +9,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
+#include <qtmetamacros.h>
 #include <qwidget.h>
 #include <string>
 
@@ -62,6 +63,7 @@ LoginDialog::LoginDialog(QWidget* parent)
             ->request(Regulation::kLogin, data)
             .then([=](const Response& response) {
                 NetUtility::instance()->set_username(username->text().toStdString());
+                emit loginSuccess(username->text());
                 this->close();
             })
             .err([=](const Response& response) {

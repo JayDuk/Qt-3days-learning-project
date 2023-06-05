@@ -13,5 +13,8 @@ class LoginDialog : public QDialog
   public:
     LoginDialog(QWidget* parent = nullptr);
     ~LoginDialog();
+
+  signals:
+    void loginSuccess(QString username);
 };
 #endif  //_login_h_

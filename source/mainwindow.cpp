@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "login.h"
 #include "message.h"
+#include "net/NetUtility.h"
 #include "net/netutility.h"
 #include "net/regulation.h"
 #include "net/request.h"
@@ -45,14 +46,15 @@ MainWindow::MainWindow(QWidget* parent)
   : QMainWindow(parent)
 {
     initSocket();
-
+    initWidgets();
     connect(NetUtility::instance(), &NetUtility::onGetMessage, this, &MainWindow::onGetMessage);
 
     LoginDialog* login = new LoginDialog(this);
+    connect(login, &LoginDialog::loginSuccess, this, [=](QString username) {
+        this->setWindowTitle(this->windowTitle() + "(" + username + ")");
+    });
     login->setModal(true);
     login->exec();
-
-    initWidgets();
 }
 
 MainWindow::~MainWindow()
@@ -149,6 +151,7 @@ QWidget* MainWindow::buildMessageListWidget(QWidget* parent)
 
     QWidget* messages = new QWidget();
     messageLayout_ = new QStackedLayout(messages);
+    messageLayout_->addWidget(getChatMessageLayout(NetUtility::instance()->username().c_str()));
 
     messageScrollArea->setWidget(messages);
     messageScrollArea->verticalScrollBar()->setValue(messageScrollArea->verticalScrollBar()->maximum());
@@ -161,7 +164,16 @@ QWidget* MainWindow::buildMessageListWidget(QWidget* parent)
     QHBoxLayout* inputLayout = new QHBoxLayout(inputWidget);
     inputWidget->setLayout(inputLayout);
     QTextEdit* textEdit = new QTextEdit(inputWidget);
+    textEdit->setEnabled(false);
+
+    connect(listWidget_, &QListWidget::itemActivated, textEdit, [=](QListWidgetItem* item) {
+        textEdit->setEnabled(true);
+        textEdit->setFocus();
+    });
+
     QPushButton* sendButton = new QPushButton("send", inputWidget);
+    sendButton->setDisabled(true);
+
     sendButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     inputLayout->addWidget(textEdit);
     inputLayout->addWidget(sendButton);
@@ -209,7 +221,22 @@ QWidget* MainWindow::buildMessageListWidget(QWidget* parent)
 }
 QWidget* MainWindow::buildToolWidget(QWidget* parent)
 {
-    return new QWidget(parent);
+    QWidget* widget = new QWidget(parent);
+    QVBoxLayout* layout = new QVBoxLayout(widget);
+    widget->setLayout(layout);
+
+    QPushButton* button = new QPushButton("添加好友", widget);
+    layout->addWidget(button);
+
+    QPushButton* button1 = new QPushButton("删除好友", widget);
+    layout->addWidget(button1);
+
+    QPushButton* button2 = new QPushButton("创建群聊", widget);
+    layout->addWidget(button2);
+
+    layout->addStretch();
+
+    return widget;
 }
 
 void MainWindow::onUserListChanged(int index)
