@@ -49,4 +49,4 @@ class Message : public QWidget
     ~Message() {}
 };
 
-#endif  //_message_h_
+#endif  // MESSAGE_H_

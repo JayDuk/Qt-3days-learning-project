@@ -13,6 +13,7 @@
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qscrollarea.h>
+#include <qscrollbar.h>
 #include <qsplitter.h>
 #include <qstackedlayout.h>
 #include <qtextedit.h>

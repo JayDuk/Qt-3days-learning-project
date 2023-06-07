@@ -1,6 +1,4 @@
 #include "login.h"
-#include "net/netutility.h"
-#include "net/regulation.h"
 
 #include <qboxlayout.h>
 #include <qfont.h>
@@ -12,6 +10,9 @@
 #include <qtmetamacros.h>
 #include <qwidget.h>
 #include <string>
+
+#include "net/netutility.h"
+#include "net/regulation.h"
 
 LoginDialog::LoginDialog(QWidget* parent)
   : QDialog(parent)

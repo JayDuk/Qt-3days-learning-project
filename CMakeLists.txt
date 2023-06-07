@@ -18,6 +18,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets   )
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
+include/addfrienddialog.hpp
 include/userlist.hpp
  d:/QtProject/chat/include/login.h
 d:/QtProject/chat/include/mainwindow.h

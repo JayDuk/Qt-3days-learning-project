@@ -55,7 +55,7 @@ uint32_t Response::seq() const
 }
 bool Response::isBroadcast() const
 {
-    return seq_ == Regulation::Boradcast_Seq;
+    return seq_ == Regulation::Broadcast_Seq;
 }
 uint32_t Response::code() const
 {

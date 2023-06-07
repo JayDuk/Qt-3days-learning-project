@@ -27,10 +27,6 @@ NetUtility::NetUtility()
 {
     socket_.connectToHost(QHostAddress("1.14.110.4"), 9999);
 
-    while (socket_.waitForConnected() == false)
-    {
-    }
-
     connect(&socket_, &QTcpSocket::readyRead, this, &NetUtility::handleRead);
 
     broad_handles_
@@ -95,5 +91,5 @@ void NetUtility::handleRead()
     qDebug() << "handleRead";
     auto func = dispatch(response);
     if (func != nullptr)
-        std::thread(func, response).detach();
+        func(response);
 }

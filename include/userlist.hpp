@@ -8,6 +8,7 @@
 #include <qjsonobject.h>
 #include <qlistwidget.h>
 #include <qmessagebox.h>
+#include <qnamespace.h>
 #include <qtmetamacros.h>
 #include <qwidget.h>
 
@@ -16,8 +17,9 @@
 class UserList : public QWidget
 {
     Q_OBJECT
-    QListWidget* list;
+    QListWidget* list_;
     bool isSingleChat_ = false;
+    QString activeWindow_;
 
   signals:
     void onSelectUserToChat(QString username, bool isSingleChat);
@@ -35,18 +37,22 @@ class UserList : public QWidget
         comboBox->addItem("群聊列表");
         layout->addWidget(comboBox);
 
-        list = new QListWidget(this);
-        list->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        list->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
-        list->setUniformItemSizes(true);
-        layout->addWidget(list);
+        list_ = new QListWidget(this);
+        list_->setVerticalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+        list_->setHorizontalScrollBarPolicy(Qt::ScrollBarPolicy::ScrollBarAlwaysOff);
+        list_->setUniformItemSizes(true);
+        layout->addWidget(list_);
 
         connect(comboBox, &QComboBox::activated, this, &UserList::onSelectUserList);
         onSelectUserList(0);
 
-        connect(list, &QListWidget::itemActivated, this, [this](QListWidgetItem* item) {
-            emit onSelectUserToChat(item->text(), isSingleChat_);
+        connect(list_, &QListWidget::itemActivated, this, [this](QListWidgetItem* item) {
+            activeWindow_ = item->text().replace("(新消息)", "");
+            item->setText(activeWindow_);
+            emit onSelectUserToChat(activeWindow_, isSingleChat_);
         });
+
+        connect(NetUtility::instance(), &NetUtility::onGetMessage, this, &UserList::onNewChatFromChatwindow);
 
         layout->setStretch(0, 3);
         layout->setStretch(1, 7);
@@ -57,6 +63,33 @@ class UserList : public QWidget
     }
 
   private slots:
+    void onNewChatFromChatwindow(QString chatwindow)
+    {
+        if (chatwindow == activeWindow_)
+            return;
+
+        QString newChatwindow = chatwindow + "(新消息)";
+        for (int i = 0; i < list_->count(); ++i)
+        {
+            auto item = list_->item(i);
+            if (item->text() == chatwindow)
+                item->setText(newChatwindow);
+
+            if (item->text() != newChatwindow)
+                continue;
+
+            list_->takeItem(i);
+            list_->insertItem(0, item);
+            return;
+        }
+
+        QListWidgetItem* item = new QListWidgetItem(chatwindow + "(新消息)", list_);
+        item->setSizeHint(QSize(0, 30));
+        item->setTextAlignment(Qt::AlignCenter);
+        item->setToolTip(chatwindow);
+
+        list_->insertItem(0, item);
+    }
     void onSelectUserList(int index)
     {
         isSingleChat_ = index == 0 || index == 1;
@@ -69,7 +102,7 @@ class UserList : public QWidget
             ->request(Regulation::kInfo, data)
             .then(
                 [=](const Response& response) {
-                    list->clear();
+                    list_->clear();
                     QJsonDocument jsonDocument = QJsonDocument::fromJson(response.data().c_str());
                     QJsonArray jsonArray = jsonDocument.array();
 
@@ -79,12 +112,13 @@ class UserList : public QWidget
                         if (username.toStdString() == request_username)
                             continue;
 
-                        QListWidgetItem* item = new QListWidgetItem(list);
-                        item->setSizeHint(QSize(0, 50));
-                        item->setTextAlignment(Qt::AlignCenter);
-                        item->setText(username);
+                        QListWidgetItem* item = new QListWidgetItem(username, list_);
 
-                        list->addItem(item);
+                        item->setSizeHint(QSize(0, 30));
+                        item->setTextAlignment(Qt::AlignCenter);
+                        item->setToolTip(username);
+
+                        list_->addItem(item);
                     }
                 })
             .err(
