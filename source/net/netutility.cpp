@@ -32,11 +32,14 @@ NetUtility::NetUtility()
 
     broad_handles_.insert({Regulation::kChat, std::bind(&NetUtility::onRecvResponseOfChat, this, std::placeholders::_1)});
 
-    broad_handles_
-        .insert({Regulation::kAdd, [=](const Response& response) {
-                     if (response.data() != username())
-                         emit onGetAddFriend(response.data().c_str());
-                 }});
+    broad_handles_.insert({Regulation::kAdd, [=](const Response& response) {
+                               if (response.data() != username())
+                                   emit onGetAddFriend(response.data().c_str());
+                           }});
+    broad_handles_.insert({Regulation::kJoin, [=](const Response& response) {
+                               if (response.data() != username())
+                                   emit onGetAddGroup(response.data().c_str());
+                           }});
 }
 
 RequestHandler& NetUtility::request(uint32_t oper, std::string data)

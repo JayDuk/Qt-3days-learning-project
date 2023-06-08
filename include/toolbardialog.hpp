@@ -62,16 +62,24 @@ class ToolBarDialog : public QDialog
         setLayout(layout);
 
         QListWidget* funcListWidget = new QListWidget(this);
+        funcListWidget->setAutoScroll(false);
+        funcListWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         funcListWidget->setFixedHeight(30);
         funcListWidget->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
         funcListWidget->setFlow(QListView::LeftToRight);
         funcListWidget->addItem("添加好友");
         funcListWidget->addItem("好友申请");
+        funcListWidget->addItem("创建群聊");
+        funcListWidget->addItem("加入群聊");
+        funcListWidget->addItem("群聊申请");
         layout->addWidget(funcListWidget);
 
         QStackedLayout* stackedLayout = new QStackedLayout(this);
         stackedLayout->addWidget(widgetLeft());
         stackedLayout->addWidget(widgetRight());
+        stackedLayout->addWidget(widgetCreateGroup());
+        stackedLayout->addWidget(widgetAddGroup());
+        stackedLayout->addWidget(widgetGroupAddRequest());
         stackedLayout->setCurrentIndex(0);
         layout->addLayout(stackedLayout);
 
@@ -147,6 +155,113 @@ class ToolBarDialog : public QDialog
                 onHandleFriendOperation(Regulation::kAccept, friend_name);
                 widget->removeItemWidget(item);
             });
+
+            connect(button2, &QPushButton::clicked, this, [=]() {
+                onHandleFriendOperation(Regulation::kRefuse, friend_name);
+                widget->removeItemWidget(item);
+            });
+        });
+
+        return widget;
+    }
+
+    QWidget* widgetCreateGroup()
+    {
+        QWidget* widget = new QWidget(this);
+        QVBoxLayout* layout = new QVBoxLayout(widget);
+        widget->setLayout(layout);
+
+        QLineEdit* lineEdit = new QLineEdit(widget);
+        lineEdit->setPlaceholderText("请输入群聊名");
+        layout->addWidget(lineEdit);
+
+        QPushButton* button = new QPushButton("创建群聊", widget);
+        layout->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [=]() {
+            QJsonObject json;
+            json["username"] = NetUtility::instance()->username().c_str();
+            json["groupname"] = lineEdit->text();
+            std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
+
+            NetUtility::instance()
+                ->request(Regulation::kCreate, data)
+                .then(
+                    [=](const Response& response) {
+                        QMessageBox::information(this, "发送成功", response.data().c_str());
+                    })
+                .err(
+                    [=](const Response& response) {
+                        QMessageBox::information(this, "发送失败", response.data().c_str());
+                    });
+        });
+
+        return widget;
+    }
+
+    QWidget* widgetAddGroup()
+    {
+        QWidget* widget = new QWidget(this);
+        QVBoxLayout* layout = new QVBoxLayout(widget);
+        widget->setLayout(layout);
+
+        QLineEdit* lineEdit = new QLineEdit(widget);
+        lineEdit->setPlaceholderText("请输入群聊名");
+        layout->addWidget(lineEdit);
+
+        QPushButton* button = new QPushButton("加入群聊", widget);
+        layout->addWidget(button);
+
+        connect(button, &QPushButton::clicked, this, [=]() {
+            QJsonObject json;
+            json["username"] = NetUtility::instance()->username().c_str();
+            json["friend"] = lineEdit->text();
+            std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
+
+            NetUtility::instance()
+                ->request(Regulation::kAdd, data)
+                .then(
+                    [=](const Response& response) {
+                        QMessageBox::information(this, "发送成功", response.data().c_str());
+                    })
+                .err(
+                    [=](const Response& response) {
+                        QMessageBox::information(this, "发送失败", response.data().c_str());
+                    });
+        });
+
+        return widget;
+    }
+
+    QWidget* widgetGroupAddRequest()
+    {
+        QListWidget* widget = new QListWidget(this);
+
+        connect(NetUtility::instance(), &NetUtility::onGetAddGroup, widget, [=](QString friend_name) {
+            QWidget* itemWidget = new QWidget(widget);
+            QHBoxLayout* layout = new QHBoxLayout(itemWidget);
+            itemWidget->setLayout(layout);
+
+            layout->setContentsMargins(0, 0, 0, 0);
+
+            QLabel* label = new QLabel(friend_name, itemWidget);
+            layout->addWidget(label);
+            layout->addStretch();
+            QPushButton* button = new QPushButton("同意", itemWidget);
+            layout->addWidget(button);
+
+            QPushButton* button2 = new QPushButton("拒绝", itemWidget);
+            layout->addWidget(button2);
+
+            QListWidgetItem* item = new QListWidgetItem(widget);
+            widget->addItem(item);
+            widget->setItemWidget(item, itemWidget);
+
+            connect(button, &QPushButton::clicked, this, [=]() {
+                onHandleFriendOperation(Regulation::kAccept, friend_name);
+                widget->removeItemWidget(item);
+            });
+
             connect(button2, &QPushButton::clicked, this, [=]() {
                 onHandleFriendOperation(Regulation::kRefuse, friend_name);
                 widget->removeItemWidget(item);

@@ -35,9 +35,11 @@ class NetUtility : public QObject
   signals:
     void onGetMessage(QString chatWindow, QString speaker, QString message, QString time, bool isSingleChat);
     void onGetAddFriend(QString username);
+    void onGetAddGroup(QString username);
 
   public:
-    std::string username() const
+    std::string
+    username() const
     {
         return username_;
     }
