@@ -38,13 +38,13 @@
 #include <iostream>
 #include <string>
 
-#include "addfrienddialog.hpp"
 #include "login.h"
 #include "message.h"
 #include "messagelist.hpp"
 #include "net/netutility.h"
 #include "net/regulation.h"
 #include "net/request.h"
+#include "toolbardialog.hpp"
 #include "userlist.hpp"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -102,8 +102,8 @@ QWidget* MainWindow::buildToolWidget(QWidget* parent)
     QPushButton* button = new QPushButton("添加好友", widget);
     layout->addWidget(button);
 
+    ToolBarDialog* dialog = new ToolBarDialog(this);
     connect(button, &QPushButton::clicked, this, [=]() {
-        AddFriendDialog* dialog = new AddFriendDialog(this);
         dialog->setModal(true);
         dialog->exec();
     });

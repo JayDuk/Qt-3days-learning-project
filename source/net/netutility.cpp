@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QTcpSocket>
 #include <QThread>
+#include <functional>
 #include <memory>
 #include <qabstractsocket.h>
 #include <qglobal.h>
@@ -29,18 +30,12 @@ NetUtility::NetUtility()
 
     connect(&socket_, &QTcpSocket::readyRead, this, &NetUtility::handleRead);
 
+    broad_handles_.insert({Regulation::kChat, std::bind(&NetUtility::onRecvResponseOfChat, this, std::placeholders::_1)});
+
     broad_handles_
-        .insert({Regulation::kChat,
-                 [=](const Response& response) {
-                     QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
-
-                     QString chatWindow = json["chatwindow"].toString();
-                     QString speaker = json["speaker"].toString();
-                     QString message = json["message"].toString();
-                     qint64 time = json["time"].toDouble();
-
-                     QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(time);
-                     emit onGetMessage(chatWindow, speaker, message, dateTime.toString("yyyy-MM-dd hh:mm:ss"));
+        .insert({Regulation::kAdd, [=](const Response& response) {
+                     if (response.data() != username())
+                         emit onGetAddFriend(response.data().c_str());
                  }});
 }
 
@@ -57,7 +52,6 @@ RequestHandler& NetUtility::request(uint32_t oper, std::string data)
 
 void NetUtility::close()
 {
-    request(Regulation::kExit, "");
     socket_.close();
 }
 
@@ -92,4 +86,18 @@ void NetUtility::handleRead()
     auto func = dispatch(response);
     if (func != nullptr)
         func(response);
+}
+
+void NetUtility::onRecvResponseOfChat(const Response& response)
+{
+    QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
+
+    QString chatWindow = json["chatwindow"].toString();
+    QString speaker = json["speaker"].toString();
+    QString message = json["message"].toString();
+    qint64 time = json["time"].toDouble();
+    bool isSingleChat = json["single"].toBool();
+
+    QDateTime dateTime = QDateTime::fromMSecsSinceEpoch(time);
+    emit onGetMessage(chatWindow, speaker, message, dateTime.toString("yyyy-MM-dd hh:mm:ss"), isSingleChat);
 }

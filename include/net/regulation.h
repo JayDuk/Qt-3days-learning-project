@@ -11,7 +11,9 @@ class Regulation
     constexpr static uint32_t kInfo = 2;
     constexpr static uint32_t kExit = 3;
     constexpr static uint32_t kChat = 4;
-    constexpr static uint32_t kAddFriend = 5;
+    static constexpr uint32_t kAdd = 5;     // username message to
+    static constexpr uint32_t kAccept = 6;  // username message to
+    static constexpr uint32_t kRefuse = 7;  // username message to
 };
 
 #endif  // REGULATION_H

@@ -33,7 +33,8 @@ class NetUtility : public QObject
     std::string username_;
 
   signals:
-    void onGetMessage(QString chatWindow, QString speaker, QString message, QString time);
+    void onGetMessage(QString chatWindow, QString speaker, QString message, QString time, bool isSingleChat);
+    void onGetAddFriend(QString username);
 
   public:
     std::string username() const
@@ -56,6 +57,8 @@ class NetUtility : public QObject
 
   private slots:
     void handleRead();
+
+    void onRecvResponseOfChat(const Response& response);
 };
 
 #endif  // NETUTILITY_H

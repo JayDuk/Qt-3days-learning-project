@@ -27,7 +27,6 @@ class MessageList : public QWidget
     QMap<QString, QWidget*> userMessageWidgets_;
     QMap<QString, QVBoxLayout*> userMessageLayouts_;
     QStackedLayout* messageLayout_;
-    bool isSingleChat_ = false;
 
   public:
     MessageList(QWidget* parent = nullptr)
@@ -62,7 +61,6 @@ class MessageList : public QWidget
         object["username"] = NetUtility::instance()->username().c_str();
         object["chatwindow"] = chattingUsername_->text();
         object["message"] = message;
-        object["single"] = isSingleChat_;
 
         std::string data = QJsonDocument(object).toJson(QJsonDocument::Compact).toStdString();
 
@@ -77,9 +75,8 @@ class MessageList : public QWidget
             });
     }
 
-    void onSwitchToChattingWindow(QString username, bool isSingleChat)
+    void onSwitchToChattingWindow(QString username)
     {
-        isSingleChat_ = isSingleChat;
         chattingUsername_->setText(username);
 
         if (!userMessageWidgets_.contains(username))
