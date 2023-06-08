@@ -35,7 +35,7 @@ class UserList : public QWidget
         comboBox->addItem("消息列表");
         comboBox->addItem("在线列表");
         comboBox->addItem("好友列表");
-    //    comboBox->addItem("群聊列表");
+        comboBox->addItem("群聊列表");
         layout->addWidget(comboBox);
 
         QPushButton* refresh = new QPushButton("刷新", this);

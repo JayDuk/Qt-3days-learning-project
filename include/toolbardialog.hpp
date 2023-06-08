@@ -52,6 +52,10 @@ class ItemWidget : public QWidget
 class ToolBarDialog : public QDialog
 {
     Q_OBJECT
+
+    QStackedLayout* stackedLayout_;
+    QListWidget* funcListWidget_;
+
   public:
     ToolBarDialog(QWidget* parent = nullptr)
       : QDialog(parent)
@@ -61,29 +65,28 @@ class ToolBarDialog : public QDialog
         QVBoxLayout* layout = new QVBoxLayout(this);
         setLayout(layout);
 
-        QListWidget* funcListWidget = new QListWidget(this);
-        funcListWidget->setAutoScroll(false);
-        funcListWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        funcListWidget->setFixedHeight(30);
-        funcListWidget->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
-        funcListWidget->setFlow(QListView::LeftToRight);
-        funcListWidget->addItem("添加好友");
-        funcListWidget->addItem("好友申请");
-        funcListWidget->addItem("创建群聊");
-        funcListWidget->addItem("加入群聊");
-        funcListWidget->addItem("群聊申请");
-        layout->addWidget(funcListWidget);
+        funcListWidget_ = new QListWidget(this);
+        funcListWidget_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        funcListWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        funcListWidget_->setFixedHeight(30);
+        funcListWidget_->setSelectionMode(QAbstractItemView::SelectionMode::SingleSelection);
+        funcListWidget_->setFlow(QListView::LeftToRight);
+        funcListWidget_->addItem("添加好友");
+        funcListWidget_->addItem("好友申请");
+        funcListWidget_->addItem("创建群聊");
+        funcListWidget_->addItem("加入群聊");
+        funcListWidget_->addItem("群聊申请");
+        layout->addWidget(funcListWidget_);
+        stackedLayout_ = new QStackedLayout(this);
+        stackedLayout_->addWidget(widgetLeft());
+        stackedLayout_->addWidget(widgetRight());
+        stackedLayout_->addWidget(widgetCreateGroup());
+        stackedLayout_->addWidget(widgetAddGroup());
+        stackedLayout_->addWidget(widgetGroupAddRequest());
+        stackedLayout_->setCurrentIndex(0);
+        layout->addLayout(stackedLayout_);
 
-        QStackedLayout* stackedLayout = new QStackedLayout(this);
-        stackedLayout->addWidget(widgetLeft());
-        stackedLayout->addWidget(widgetRight());
-        stackedLayout->addWidget(widgetCreateGroup());
-        stackedLayout->addWidget(widgetAddGroup());
-        stackedLayout->addWidget(widgetGroupAddRequest());
-        stackedLayout->setCurrentIndex(0);
-        layout->addLayout(stackedLayout);
-
-        connect(funcListWidget, &QListWidget::currentRowChanged, stackedLayout, &QStackedLayout::setCurrentIndex);
+        connect(funcListWidget_, &QListWidget::currentRowChanged, stackedLayout_, &QStackedLayout::setCurrentIndex);
     }
     ~ToolBarDialog()
     {
@@ -98,36 +101,42 @@ class ToolBarDialog : public QDialog
         json["username"] = NetUtility::instance()->username().c_str();
         std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
 
-        NetUtility::instance()
-            ->request(Regulation::kInfo, data)
-            .then(
-                [=](const Response& response) {
-                    QJsonDocument jsonDocument = QJsonDocument::fromJson(response.data().c_str());
-                    QJsonArray jsonArray = jsonDocument.array();
+        connect(funcListWidget_, &QListWidget::currentRowChanged, widget, [=](int index) {
+            if (index != 0)
+                return;
 
-                    for (int i = 0; i < jsonArray.size(); ++i)
-                    {
-                        auto username = jsonArray.at(i).toString();
+            widget->clear();
+            NetUtility::instance()
+                ->request(Regulation::kInfo, data)
+                .then(
+                    [=](const Response& response) {
+                        QJsonDocument jsonDocument = QJsonDocument::fromJson(response.data().c_str());
+                        QJsonArray jsonArray = jsonDocument.array();
 
-                        if (username.toStdString() == NetUtility::instance()->username())
-                            continue;
+                        for (int i = 0; i < jsonArray.size(); ++i)
+                        {
+                            auto username = jsonArray.at(i).toString();
 
-                        QListWidgetItem* item = new QListWidgetItem(widget);
-                        ItemWidget* itemWidget = new ItemWidget(username, "发送好友申请", widget);
+                            if (username.toStdString() == NetUtility::instance()->username())
+                                continue;
 
-                        widget->addItem(item);
-                        widget->setItemWidget(item, itemWidget);
+                            QListWidgetItem* item = new QListWidgetItem(widget);
+                            ItemWidget* itemWidget = new ItemWidget(username, "发送好友申请", widget);
 
-                        connect(itemWidget, &ItemWidget::clicked, this, [=]() {
-                            onHandleFriendOperation(Regulation::kAdd, username);
-                        });
-                    }
-                });
+                            widget->addItem(item);
+                            widget->setItemWidget(item, itemWidget);
 
+                            connect(itemWidget, &ItemWidget::clicked, this, [=]() {
+                                onHandleFriendOperation(Regulation::kAdd, username);
+                            });
+                        }
+                    });
+        });
         return widget;
     }
 
-    QWidget* widgetRight()
+    QWidget*
+    widgetRight()
     {
         QListWidget* widget = new QListWidget(this);
 
@@ -237,14 +246,14 @@ class ToolBarDialog : public QDialog
     {
         QListWidget* widget = new QListWidget(this);
 
-        connect(NetUtility::instance(), &NetUtility::onGetAddGroup, widget, [=](QString friend_name) {
+        connect(NetUtility::instance(), &NetUtility::onGetAddGroup, widget, [=](QString username, QString groupname) {
             QWidget* itemWidget = new QWidget(widget);
             QHBoxLayout* layout = new QHBoxLayout(itemWidget);
             itemWidget->setLayout(layout);
 
             layout->setContentsMargins(0, 0, 0, 0);
 
-            QLabel* label = new QLabel(friend_name, itemWidget);
+            QLabel* label = new QLabel(username + "->" + groupname, itemWidget);
             layout->addWidget(label);
             layout->addStretch();
             QPushButton* button = new QPushButton("同意", itemWidget);
@@ -258,12 +267,42 @@ class ToolBarDialog : public QDialog
             widget->setItemWidget(item, itemWidget);
 
             connect(button, &QPushButton::clicked, this, [=]() {
-                onHandleFriendOperation(Regulation::kAccept, friend_name);
+                QJsonObject json;
+                json["username"] = username;
+                json["friend"] = groupname;
+                std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
+
+                NetUtility::instance()
+                    ->request(Regulation::kAccept, data)
+                    .then(
+                        [=](const Response& response) {
+                            if (!response.data().empty())
+                                QMessageBox::information(this, "", response.data().c_str());
+                        })
+                    .err(
+                        [=](const Response& response) {
+                            QMessageBox::information(this, "", response.data().c_str());
+                        });
                 widget->removeItemWidget(item);
             });
 
             connect(button2, &QPushButton::clicked, this, [=]() {
-                onHandleFriendOperation(Regulation::kRefuse, friend_name);
+                QJsonObject json;
+                json["username"] = username;
+                json["friend"] = groupname;
+                std::string data = QJsonDocument(json).toJson(QJsonDocument::Compact).toStdString();
+
+                NetUtility::instance()
+                    ->request(Regulation::kRefuse, data)
+                    .then(
+                        [=](const Response& response) {
+                            if (!response.data().empty())
+                                QMessageBox::information(this, "", response.data().c_str());
+                        })
+                    .err(
+                        [=](const Response& response) {
+                            QMessageBox::information(this, "", response.data().c_str());
+                        });
                 widget->removeItemWidget(item);
             });
         });

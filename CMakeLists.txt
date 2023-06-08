@@ -22,8 +22,6 @@ d:/QtProject/chat/include/login.h
 d:/QtProject/chat/include/mainwindow.h
 d:/QtProject/chat/include/message.h
 d:/QtProject/chat/include/messagelist.hpp
-d:/QtProject/chat/include/net
-d:/QtProject/chat/include/thread
 d:/QtProject/chat/include/toolbardialog.hpp
 d:/QtProject/chat/include/userlist.hpp
 d:/QtProject/chat/include/net/netutility.h
@@ -35,7 +33,6 @@ d:/QtProject/chat/include/thread/blockingqueue.h
 d:/QtProject/chat/source/login.cpp
 d:/QtProject/chat/source/main.cpp
 d:/QtProject/chat/source/mainwindow.cpp
-d:/QtProject/chat/source/net
 d:/QtProject/chat/source/net/netutility.cpp
 d:/QtProject/chat/source/net/requesthandler.cpp
 d:/QtProject/chat/source/net/response.cpp

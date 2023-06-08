@@ -68,13 +68,6 @@ void MainWindow::initWidgets()
     this->setWindowTitle("chat");
     this->resize(800, 600);
 
-    LoginDialog* login = new LoginDialog(this);
-    connect(login, &LoginDialog::loginSuccess, this, [=](QString username) {
-        this->setWindowTitle(this->windowTitle() + "(" + username + ")");
-    });
-    login->setModal(true);
-    login->exec();
-
     QSplitter* splitter = new QSplitter(this);
     splitter->setOrientation(Qt::Horizontal);
     this->setCentralWidget(splitter);
@@ -91,6 +84,13 @@ void MainWindow::initWidgets()
     splitter->setStretchFactor(0, 1);
     splitter->setStretchFactor(1, 10);
     splitter->setStretchFactor(2, 1);
+
+    LoginDialog* login = new LoginDialog(this);
+    connect(login, &LoginDialog::loginSuccess, this, [=](QString username) {
+        this->setWindowTitle(this->windowTitle() + "(" + username + ")");
+    });
+    login->setModal(true);
+    login->exec();
 }
 
 QWidget* MainWindow::buildToolWidget(QWidget* parent)

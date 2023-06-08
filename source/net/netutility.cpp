@@ -37,8 +37,8 @@ NetUtility::NetUtility()
                                    emit onGetAddFriend(response.data().c_str());
                            }});
     broad_handles_.insert({Regulation::kJoin, [=](const Response& response) {
-                               if (response.data() != username())
-                                   emit onGetAddGroup(response.data().c_str());
+                               QJsonObject json = QJsonDocument::fromJson(response.data().c_str()).object();
+                               emit onGetAddGroup(json["username"].toString(), json["friend"].toString());
                            }});
 }
 
